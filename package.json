@@ -1,0 +1,39 @@
+{
+  "name": "birthday",
+  "version": "1.0.0",
+  "main": "src/app.js",
+  "scripts": {
+    "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
+    "build": "npx tsc",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:generate": "prisma generate",
+    "prisma:seed": "ts-node prisma/seed.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "packageManager": "yarn@1.22.22+sha1.ac34549e6aa8e7ead463a7407e1c7390f61a6610",
+  "dependencies": {
+    "@prisma/client": "^6.0.1",
+    "axios": "^1.7.9",
+    "bull": "^4.16.4",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "ioredis": "^5.4.1",
+    "moment-timezone": "^0.5.46",
+    "node-cron": "^3.0.3",
+    "prisma": "^6.0.1",
+    "typescript": "^5.7.2",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.2",
+    "@types/node-cron": "^3.0.11",
+    "ts-node-dev": "^2.0.0"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  }
+}

@@ -1,0 +1,84 @@
+services:
+  api:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: test-api
+    ports:
+      - "3200:3200"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      DATABASE_URL: ${DATABASE_URL}
+      NODE_ENV: ${NODE_ENV:-development}
+    volumes:
+      - ./:/app
+    env_file:
+      - ./.env
+    networks:
+      - test-network
+
+  worker:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: test-worker
+    depends_on:
+      - redis
+    environment:
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      DATABASE_URL: ${DATABASE_URL}
+      NODE_ENV: ${NODE_ENV:-development}
+    volumes:
+      - ./:/app
+    command: ["node", "dist/src/queues/worker.js"]
+    networks:
+      - test-network
+
+  postgres:
+    image: postgres:17
+    container_name: test-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - ./.env
+    networks:
+      - test-network
+
+  redis:
+    image: redis:latest
+    container_name: test-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - test-network
+
+  adminer:
+    image: adminer:latest
+    container_name: test-adminer
+    depends_on:
+      - postgres
+    ports:
+      - "3201:8080"
+    networks:
+      - test-network
+
+volumes:
+  postgres_data:
+  redis-data:
+
+networks:
+  test-network:
+    driver: bridge

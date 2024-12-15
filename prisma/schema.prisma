@@ -1,0 +1,52 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-arm64-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String          @id @default(uuid())
+  firstName       String          @map("first_name")
+  lastName        String          @map("last_name")
+  birthDate       DateTime        @map("birth_date") @db.Date
+  anniversaryDate DateTime?       @map("anniversary_date") @db.Date
+  location        String?         @default("Asia/Jakarta")
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  deletedAt       DateTime?       @map("deleted_at")
+  ScheduledMsg    ScheduledTask[]
+
+  @@map("users")
+}
+
+model ScheduledTask {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        Type      @default(BIRTHDAY)
+  status      Status    @default(PENDING)
+  scheduledAt DateTime  @map("scheduled_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  @@unique([userId, type])
+  @@map("schedule_task")
+}
+
+enum Type {
+  BIRTHDAY
+  ANNIVERSARY
+}
+
+enum Status {
+  PENDING
+  SENT
+  FAILED
+  RETRYING
+  SCHEDULED
+}
