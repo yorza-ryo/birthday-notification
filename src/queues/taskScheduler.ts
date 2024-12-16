@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Status } from "@prisma/client";
 import { scheduleTask } from "./bullQueue";
 
 const prisma = new PrismaClient();
@@ -10,7 +10,7 @@ export async function schedulePendingTasks() {
   try {
     const pendingTasks = await prisma.scheduledTask.findMany({
       where: {
-        status: "PENDING",
+        status: Status.PENDING,
         scheduledAt: {
           gte: now,
         },
@@ -23,7 +23,7 @@ export async function schedulePendingTasks() {
         console.log(`Task ${task.id} scheduled successfully.`);
         await prisma.scheduledTask.update({
           where: { id: task.id },
-          data: { status: "SCHEDULED" },
+          data: { status: Status.SCHEDULED },
         });
       } catch (error) {
         console.error(`Failed to schedule task ${task.id}:`, error);

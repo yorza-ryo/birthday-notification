@@ -1,13 +1,11 @@
 import { Router } from "express";
-import * as userController from "../controllers/user.controller";
-import { validate } from "../middlewares/validate.middleware";
-import { userCreateSchema, userUpdateSchema } from "../schemas/user.schema";
+import UserController from "../controllers/user.controller";
 
 const router = Router();
 
-router.get("/", userController.get);
-router.post("/", validate(userCreateSchema), userController.create);
-router.patch("/:id", validate(userUpdateSchema), userController.update);
-router.delete("/:id", userController.remove);
+router.get("/", UserController.get);
+router.post("/", UserController.create);
+router.patch("/:id", UserController.update);
+router.delete("/:id", UserController.remove);
 
 export default router;

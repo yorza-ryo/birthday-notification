@@ -3,6 +3,7 @@ import userRoutes from "./routes/user.route";
 import cron from "node-cron";
 import { schedulePendingTasks } from "./queues/taskScheduler";
 import { errorHandler } from "./middlewares/error-handler.middleware";
+import { retryFailedTasks } from "./queues/retryFailedTasks";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,6 +14,14 @@ app.use("/users", userRoutes);
 cron.schedule("* * * * *", async () => {
   try {
     await schedulePendingTasks();
+  } catch (error) {
+    console.error("Error in cron job:", error);
+  }
+});
+
+cron.schedule("*/2 * * * *", async () => {
+  try {
+    await retryFailedTasks();
   } catch (error) {
     console.error("Error in cron job:", error);
   }

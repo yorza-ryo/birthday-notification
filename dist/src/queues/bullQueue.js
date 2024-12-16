@@ -44,15 +44,38 @@ function scheduleTask(userId, type, scheduledAt) {
 function sendEmail(message, user) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const response = yield axios_1.default.post("https://email-service.digitalenvision.com.au/send", {
+            const response = yield axios_1.default.post(process.env.URL_EMAIL, {
                 message,
                 to: `${user.firstName} ${user.lastName}`,
             });
-            return response.data;
+            console.log("Res: ", response);
+            if (response.status === 200 && response.data.status === "sent") {
+                console.log(`Email sent successfully at ${response.data.sentTime}`);
+                return { status: "success", sentTime: response.data.sentTime };
+            }
+            else {
+                console.log(`Unexpected response: ${JSON.stringify(response.data)}`);
+                throw new Error("Unexpected response from email service.");
+            }
         }
         catch (error) {
-            console.error("Error details:", error.response ? error.response.data : error.message);
-            throw new Error("Failed to send email");
+            if (error.response && error.response.status === 400) {
+                console.error("Invalid input error.");
+                throw new Error("Invalid input: Check the request payload.");
+            }
+            else if (error.response && error.response.status === 500) {
+                console.error("Server error. Retrying...");
+                throw new Error("Server error: Retry later.");
+            }
+            else if (error.code === "ECONNABORTED" ||
+                error.message.includes("timeout")) {
+                console.error("Request timeout. Retrying...");
+                throw new Error("Request timeout.");
+            }
+            else {
+                console.error("Unexpected error:", error.message);
+                throw error;
+            }
         }
     });
 }

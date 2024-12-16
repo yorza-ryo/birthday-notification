@@ -30,6 +30,7 @@ model ScheduledTask {
   type        Type      @default(BIRTHDAY)
   status      Status    @default(PENDING)
   scheduledAt DateTime  @map("scheduled_at")
+  retryCount  Int       @default(0) @map("retry_count")
   createdAt   DateTime  @default(now()) @map("created_at")
   updatedAt   DateTime  @updatedAt @map("updated_at")
   deletedAt   DateTime? @map("deleted_at")

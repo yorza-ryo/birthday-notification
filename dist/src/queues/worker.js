@@ -27,32 +27,24 @@ const prisma = new client_1.PrismaClient();
         try {
             yield (0, bullQueue_1.sendEmail)(message, user);
             const task = yield prisma.scheduledTask.findFirst({
-                where: { userId, type, status: "PENDING" },
+                where: { userId, type, status: client_1.Status.SCHEDULED },
             });
             if (task) {
-                yield prisma.scheduledTask.update({
+                yield prisma.scheduledTask.updateMany({
                     where: { id: task.id },
-                    data: { status: "SENT" },
+                    data: { status: client_1.Status.SENT },
                 });
             }
         }
         catch (error) {
             console.error("Error sending email:", error);
             if (job.attemptsMade >= 3) {
-                console.error(`Max attempts reached for user ${userId} and type ${type}`);
-                const task = yield prisma.scheduledTask.findFirst({
-                    where: { userId, type, status: "PENDING" },
+                yield prisma.scheduledTask.updateMany({
+                    where: { userId, type, status: client_1.Status.SCHEDULED },
+                    data: { status: client_1.Status.FAILED },
                 });
-                if (task) {
-                    yield prisma.scheduledTask.update({
-                        where: { id: task.id },
-                        data: { status: "FAILED" },
-                    });
-                }
             }
-            else {
-                throw error;
-            }
+            throw error;
         }
     }));
     console.log("Worker is ready to process jobs...");

@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient, Status } from "@prisma/client";
 import { sendEmail, taskQueue } from "./bullQueue";
 
 const prisma = new PrismaClient();
@@ -26,29 +26,26 @@ const prisma = new PrismaClient();
       await sendEmail(message, user);
 
       const task = await prisma.scheduledTask.findFirst({
-        where: { userId, type, status: "PENDING" },
+        where: { userId, type, status: Status.SCHEDULED },
       });
 
       if (task) {
         await prisma.scheduledTask.updateMany({
           where: { id: task.id },
-          data: { status: "SENT" },
+          data: { status: Status.SENT },
         });
       }
     } catch (error) {
       console.error("Error sending email:", error);
 
       if (job.attemptsMade >= 3) {
-        console.error(
-          `Max attempts reached for user ${userId} and type ${type}`
-        );
         await prisma.scheduledTask.updateMany({
-          where: { userId, type, status: "PENDING" },
-          data: { status: "FAILED" },
+          where: { userId, type, status: Status.SCHEDULED },
+          data: { status: Status.FAILED },
         });
-      } else {
-        throw error;
       }
+
+      throw error;
     }
   });
 

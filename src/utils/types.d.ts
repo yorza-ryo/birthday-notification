@@ -9,5 +9,6 @@ declare namespace NodeJS {
     REDIS_HOST: string;
     REDIS_PORT: number;
     QUEUE_NAME: string;
+    URL_EMAIL: string;
   }
 }
