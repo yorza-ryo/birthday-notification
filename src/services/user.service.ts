@@ -1,5 +1,6 @@
 import { Prisma, PrismaClient, User, Type, Status } from "@prisma/client";
 import moment from "moment-timezone";
+import { taskQueue } from "../queues/bullQueue";
 
 const prisma = new PrismaClient();
 
@@ -167,7 +168,14 @@ class UserService {
       scheduledAt.set("year", new Date().getFullYear() + 1);
     }
 
-    return tx.scheduledTask.upsert({
+    const jobId = `${userId}-${type}`;
+    const existingJob = await taskQueue.getJob(jobId);
+    if (existingJob) {
+      await existingJob.remove();
+      console.log(`Removed old job from Redis queue: ${jobId}`);
+    }
+
+    const dbTask = await tx.scheduledTask.upsert({
       where: { userId_type: { userId, type } },
       update: { scheduledAt: scheduledAt.toDate() },
       create: {
@@ -177,15 +185,48 @@ class UserService {
         user: { connect: { id: userId } },
       },
     });
+
+    await taskQueue.add(
+      { userId, type, scheduledAt: scheduledAt.toISOString() },
+      {
+        jobId,
+        delay: scheduledAt.diff(moment()),
+      }
+    );
+
+    console.log(`Scheduled task added/updated in Redis queue: ${jobId}`);
+
+    return dbTask;
   };
 
   public remove = async (id: string) => {
     try {
-      return await prisma.user.delete({
+      const scheduledTasks = await prisma.scheduledTask.findMany({
+        where: { userId: id },
+        select: { id: true, type: true },
+      });
+
+      await prisma.user.delete({
         where: { id },
       });
+
+      const removeJobs = scheduledTasks.map(async (task) => {
+        const jobName = `${task.type}_${task.id}`;
+        const jobs = await taskQueue.getJobs(["delayed", "waiting", "active"]);
+
+        for (const job of jobs) {
+          if (job.name === jobName) {
+            await job.remove();
+          }
+        }
+      });
+
+      await Promise.all(removeJobs);
+
+      return { message: "User and associated tasks deleted successfully" };
     } catch (error) {
-      throw error;
+      console.error("Error removing user and tasks:", error);
+      throw new Error("Failed to remove user and tasks");
     }
   };
 }

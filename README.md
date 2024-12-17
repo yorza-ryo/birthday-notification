@@ -51,6 +51,8 @@ The Birthday Message API is a service designed to send birthday messages to user
 
    ```bash
    docker compose --env-file ./.env up -d --build
+   or
+   yarn build
    ```
 
 5. Run database migrations:
