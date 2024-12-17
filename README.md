@@ -112,6 +112,10 @@ Update a user with by their user id.
 }
 ```
 
+### DELETE /users/:id
+
+Delete a user with by their user id.
+
 ## Testing
 
 To run tests, execute:
